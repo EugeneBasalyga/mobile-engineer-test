@@ -114,7 +114,13 @@ export class ImportCoordinator {
   }
 
   async acceptPicked(picked: PickedFile): Promise<void> {
-    const rejection = await this.inspect(picked);
+    let rejection: Rejection | null;
+    try {
+      rejection = await this.inspect(picked);
+    } catch (error) {
+      await this.removeCopy(picked.path);
+      throw error;
+    }
     if (rejection) {
       await this.removeCopy(picked.path);
       this.deps.log('file_rejected');

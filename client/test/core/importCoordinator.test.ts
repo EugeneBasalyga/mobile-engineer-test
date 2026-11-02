@@ -362,6 +362,16 @@ describe('local rejection', () => {
     expect(coordinator.getState().draft?.byteSize).toBe(MAX_FILE_BYTES);
   });
 
+  it('removes the copy when the file cannot be inspected', async () => {
+    const coordinator = launch();
+    const path = files.pick(join(FIXTURES, 'statement.csv'));
+    const readHead = jest.spyOn(files, 'readHead').mockRejectedValueOnce(new Error('read failed'));
+    await expect(coordinator.acceptPicked({ path, name: 'statement.csv' })).rejects.toThrow('read failed');
+    readHead.mockRestore();
+    expect(await files.listOwned()).toEqual([]);
+    expect(coordinator.getState().draft).toBeNull();
+  });
+
   it('removes the copy when the user cancels before sending', async () => {
     const coordinator = launch();
     await coordinator.acceptPicked({ path: files.pick(join(FIXTURES, 'statement.csv')), name: 'statement.csv' });
