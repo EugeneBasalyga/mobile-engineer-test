@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import { readFileSync, truncateSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { ImportCoordinator } from '../../src/core/importCoordinator';
-import { applyServerView, type Operation } from '../../src/core/operation';
-import { MAX_FILE_BYTES } from '../../src/core/validateFile';
+import type { ImportCoordinator } from '@/packages/statementImport/core/importCoordinator';
+import { applyServerView, type Operation } from '@/packages/statementImport/core/operation';
+import { MAX_FILE_BYTES } from '@/packages/statementImport/core/validateFile';
 import { createCoordinator, DiskFiles, FIXTURES, MemoryStore, startMock, waitFor, type LogRecord, type Mock } from './support';
 
 let mock: Mock;

@@ -1,7 +1,22 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "@react-native/typescript-config",
+  "exclude": ["**/node_modules", "**/Pods"],
   "compilerOptions": {
-    "strict": true,
-    "types": ["jest", "node"]
-  }
+    "types": ["jest", "node"],
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "./.eslintrc.js",
+    "./babel.config.js",
+    "./metro.config.js",
+    "./react-native.config.js",
+    "./index.js",
+    "src",
+    "src/app/@types",
+    "**/*.ts",
+    "**/*.tsx"
+  ]
 }

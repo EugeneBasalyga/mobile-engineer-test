@@ -4,10 +4,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-import { createImportApi, type Uploader } from '../../src/api/client';
-import { ImportCoordinator, type LocalFiles, type OperationStore } from '../../src/core/importCoordinator';
-import type { LogEvent, LogFields } from '../../src/core/log';
-import type { Operation } from '../../src/core/operation';
+import { createImportApi, type Uploader } from '@/packages/statementImport/api/client';
+import { ImportCoordinator, type LocalFiles, type OperationStore } from '@/packages/statementImport/core/importCoordinator';
+import type { LogEvent, LogFields } from '@/packages/statementImport/core/log';
+import type { Operation } from '@/packages/statementImport/core/operation';
 
 export const FIXTURES = join(__dirname, '../../../kit/fixtures');
 
