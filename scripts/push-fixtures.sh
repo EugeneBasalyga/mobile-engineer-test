@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Copies the kit's fixtures to the running Android emulator and booted iOS simulator,
-# so the system picker can find them. Run `npm run fixtures:oversize` in kit/ first.
 set -euo pipefail
 fixtures="$(cd "$(dirname "$0")/../kit/fixtures" && pwd)"
 files=(statement.csv statement.pdf spoofed.pdf oversize.csv)

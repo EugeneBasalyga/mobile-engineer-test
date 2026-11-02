@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/static-components */
-import { type FC, memo } from 'react';
+import { memo } from 'react';
 import { type ColorValue, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import Animated, {
   type AnimatedStyle,
@@ -10,7 +9,6 @@ import Animated, {
   useDerivedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { type SvgProps } from 'react-native-svg';
 import { StyleSheet } from 'react-native-unistyles';
 
 import { BUTTON_ANIMATION_CONFIG } from '@/packages/shared/components/Buttons/constants';
@@ -22,11 +20,8 @@ import {
 import Loader from '@/packages/shared/components/Loader';
 import { AnimatedText } from '@/packages/shared/components/Primitives';
 import { getColorAlpha } from '@/packages/shared/utils/colorAlpha';
-import { getAnimatedIcon } from '@/packages/shared/utils/getAnimatedIcon.';
 
 export interface ButtonContentExternalProps {
-  IconLeft?: FC<SvgProps>;
-  IconRight?: FC<SvgProps>;
   disabled?: boolean;
   loading?: boolean;
   title?: string;
@@ -90,8 +85,6 @@ const styles = StyleSheet.create((theme) => {
 
 const ButtonContent = memo(
   ({
-    IconLeft,
-    IconRight,
     buttonTheme,
     disabled = false,
     loading = false,
@@ -103,9 +96,6 @@ const ButtonContent = memo(
     styles.useVariants({
       size,
     });
-
-    const AnimatedLeftIcon = IconLeft ? getAnimatedIcon(IconLeft) : null;
-    const AnimatedRightIcon = IconRight ? getAnimatedIcon(IconRight) : null;
 
     const state = useDerivedValue((): ButtonThemeState => {
       if (disabled) {
@@ -133,11 +123,7 @@ const ButtonContent = memo(
 
     return (
       <Animated.View style={[styles.root, style]}>
-        {!!AnimatedLeftIcon && <AnimatedLeftIcon color={animatedColor} />}
-
         {!!title && <AnimatedText style={[styles.title, titleAnimatedStyle]}>{title}</AnimatedText>}
-
-        {!!AnimatedRightIcon && <AnimatedRightIcon color={animatedColor} />}
 
         {loading && (
           <Animated.View

@@ -1,116 +1,82 @@
-import { useNavigation } from '@react-navigation/native';
-import { type FC, useState } from 'react';
-import { Alert, AppState } from 'react-native';
+import { type FC } from 'react';
 
-import { useMount } from '@/packages/shared/hooks/lifecycle';
 import { useTranslation } from '@/packages/shared/hooks/translation';
 
-import { type MainNavigationProps } from '@/app/models/navigation/main';
-import { MAIN_ROUTE } from '@/app/routes/routes';
-import ConfirmView from '@/packages/statementImport/components/ConfirmView';
-import { Progress, Screen } from '@/packages/statementImport/components/Layout';
-import StartView from '@/packages/statementImport/components/StartView';
-import StatusView from '@/packages/statementImport/components/StatusView';
-import { useImportCoordinator } from '@/packages/statementImport/hooks/importCoordinator';
-import { pickStatement } from '@/packages/statementImport/platform/picker';
+import {
+  ConfirmView,
+  ProgressRow,
+  ScreenLayout,
+  StartView,
+  StatusView,
+} from '@/packages/statementImport/components';
+
+import { useImportScreen } from './useImportScreen';
 
 const ImportScreen: FC = () => {
   const { t } = useTranslation('statementImport');
 
-  const navigation = useNavigation<MainNavigationProps<typeof MAIN_ROUTE.IMPORT>>();
+  const {
+    busy,
+    connectionLost,
+    draft,
+    handleCancelPress,
+    handleConfirmPress,
+    handleDeletePress,
+    handleDiagnosticsPress,
+    handleDismissPress,
+    handleItemPress,
+    handlePickPress,
+    handleRecoverPress,
+    handleRefreshPress,
+    handleRetrySendPress,
+    operation,
+    pickFailed,
+    ready,
+    rejection,
+  } = useImportScreen();
 
-  const { coordinator, state } = useImportCoordinator();
-
-  const [pickError, setPickError] = useState(false);
-
-  useMount(() => {
-    coordinator.start();
-
-    const subscription = AppState.addEventListener('change', (status) => {
-      if (status === 'active') {
-        coordinator.refresh();
-      }
-    });
-
-    return () => subscription.remove();
-  });
-
-  const openDiagnostics = () => navigation.navigate(MAIN_ROUTE.DIAGNOSTICS);
-
-  const pick = async () => {
-    setPickError(false);
-    coordinator.clearRejection();
-
-    try {
-      const result = await pickStatement();
-
-      if (result.kind === 'tooLarge') {
-        coordinator.rejectTooLarge();
-      } else if (result.kind === 'picked') {
-        await coordinator.acceptPicked(result.file);
-      }
-    } catch {
-      setPickError(true);
-    }
-  };
-
-  const confirmDelete = () => {
-    Alert.alert(t('delete.dialogTitle'), t('delete.dialogMessage'), [
-      { style: 'cancel', text: t('delete.dialogCancel') },
-      {
-        onPress: () => coordinator.requestDelete(),
-        style: 'destructive',
-        text: t('delete.dialogConfirm'),
-      },
-    ]);
-  };
-
-  if (!state.ready) {
+  if (!ready) {
     return (
-      <Screen title={t('start.title')}>
-        <Progress label={t('start.loading')} />
-      </Screen>
+      <ScreenLayout title={t('start.title')}>
+        <ProgressRow label={t('start.loading')} />
+      </ScreenLayout>
     );
   }
 
-  if (state.operation) {
-    const { deleteOutcome, view } = state.operation;
-
+  if (operation) {
     return (
       <StatusView
-        busy={state.busy}
-        connectionLost={state.connectionLost}
-        operation={state.operation}
-        onDelete={deleteOutcome ? () => coordinator.requestDelete() : confirmDelete}
-        onDiagnostics={openDiagnostics}
-        onDismiss={() => coordinator.dismiss()}
-        onRecover={() => coordinator.recover()}
-        onRefresh={() => coordinator.refresh()}
-        onRetrySend={() => coordinator.retrySend()}
-        onOpenItem={(item) =>
-          navigation.navigate(MAIN_ROUTE.ITEM, { currency: view?.currency ?? '', item })
-        }
+        busy={busy}
+        connectionLost={connectionLost}
+        operation={operation}
+        onDelete={handleDeletePress}
+        onDiagnostics={handleDiagnosticsPress}
+        onDismiss={handleDismissPress}
+        onOpenItem={handleItemPress}
+        onRecover={handleRecoverPress}
+        onRefresh={handleRefreshPress}
+        onRetrySend={handleRetrySendPress}
       />
     );
   }
 
-  if (state.draft) {
+  if (draft) {
     return (
       <ConfirmView
-        busy={state.busy}
-        draft={state.draft}
-        onCancel={() => coordinator.cancelDraft()}
-        onConfirm={() => coordinator.confirmDraft()}
+        busy={busy}
+        draft={draft}
+        onCancel={handleCancelPress}
+        onConfirm={handleConfirmPress}
       />
     );
   }
 
   return (
     <StartView
-      pickError={pickError}
-      rejection={state.rejection}
-      onDiagnostics={openDiagnostics}
-      onPick={pick}
+      pickFailed={pickFailed}
+      rejection={rejection}
+      onDiagnostics={handleDiagnosticsPress}
+      onPick={handlePickPress}
     />
   );
 };

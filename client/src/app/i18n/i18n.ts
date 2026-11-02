@@ -1,15 +1,12 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import sharedLocalization from '@/packages/shared/localization/en';
-
 import statementImportLocalization from '@/packages/statementImport/localization/ru';
 
 const LANGUAGE = 'ru';
 
 export const resources = {
   [LANGUAGE]: {
-    shared: sharedLocalization,
     statementImport: statementImportLocalization,
     translation: {},
   },

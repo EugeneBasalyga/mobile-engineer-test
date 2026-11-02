@@ -12,7 +12,7 @@ import ButtonContent, {
 import { BUTTON_SIZE } from '@/packages/shared/components/Buttons/constants';
 import { type ButtonSize } from '@/packages/shared/components/Buttons/types';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'bare' | 'bareSecondary';
+export type ButtonVariant = 'danger' | 'primary' | 'secondary';
 
 interface ButtonProps extends ButtonContainerExternalProps, ButtonContentExternalProps {
   contentStyle?: StyleProp<AnimatedStyle<ViewStyle>>;
@@ -22,7 +22,7 @@ interface ButtonProps extends ButtonContainerExternalProps, ButtonContentExterna
 
 const styles = StyleSheet.create((theme) => {
   return {
-    rootNotBare: {
+    root: {
       borderRadius: theme.radius.full,
       variants: {
         size: {
@@ -50,8 +50,6 @@ const styles = StyleSheet.create((theme) => {
 
 const Button = memo(
   ({
-    IconLeft,
-    IconRight,
     contentStyle,
     disabled = false,
     loading = false,
@@ -60,7 +58,6 @@ const Button = memo(
     style,
     title,
     variant = 'primary',
-    withHapticFeedback = true,
   }: ButtonProps) => {
     styles.useVariants({
       size,
@@ -74,8 +71,6 @@ const Button = memo(
       (pressed: SharedValue<boolean>) => {
         return (
           <ButtonContent
-            IconLeft={IconLeft}
-            IconRight={IconRight}
             buttonTheme={buttonTheme}
             disabled={disabled}
             loading={loading}
@@ -86,7 +81,7 @@ const Button = memo(
           />
         );
       },
-      [IconLeft, IconRight, buttonTheme, contentStyle, disabled, loading, size, title]
+      [buttonTheme, contentStyle, disabled, loading, size, title]
     );
 
     return (
@@ -95,8 +90,7 @@ const Button = memo(
         disabled={disabled}
         loading={loading}
         renderContent={renderContent}
-        style={[variant !== 'bare' && variant !== 'bareSecondary' && styles.rootNotBare, style]}
-        withHapticFeedback={withHapticFeedback}
+        style={[styles.root, style]}
         onPress={onPress}
       />
     );

@@ -2,22 +2,22 @@ import { render, screen } from '@testing-library/react-native';
 
 import StatusView from '@/packages/statementImport/components/StatusView';
 import {
-  applyServerView,
-  type Operation,
-  type ServerView,
-} from '@/packages/statementImport/core/operation';
+  type IOperation,
+  type IServerView,
+} from '@/packages/statementImport/models/statementImport';
+import { applyServerView } from '@/packages/statementImport/utils/operation';
 
 const jobId = 'job-demo-001';
-const sending: Operation = {
+const sending: IOperation = {
   byteSize: 112,
   format: 'csv',
   idempotencyKey: 'key-00000001',
   opId: 'op',
   phase: 'sending',
 };
-const queued: ServerView = { jobId, revision: 1, status: 'queued' };
-const processing: ServerView = { jobId, revision: 2, status: 'processing' };
-const ready: ServerView = {
+const queued: IServerView = { jobId, revision: 1, status: 'queued' };
+const processing: IServerView = { jobId, revision: 2, status: 'processing' };
+const ready: IServerView = {
   currency: 'AUD',
   items: [
     { amountMinor: 1999, cadence: 'monthly', id: 'rec-001', lastSeen: '2026-10-01', merchant: 'StreamBeam' },
@@ -27,12 +27,12 @@ const ready: ServerView = {
   revision: 3,
   status: 'ready',
 };
-const deleting: ServerView = { jobId, revision: 4, status: 'deleting' };
-const deleted: ServerView = { jobId, revision: 5, status: 'deleted' };
+const deleting: IServerView = { jobId, revision: 4, status: 'deleting' };
+const deleted: IServerView = { jobId, revision: 5, status: 'deleted' };
 
 const noop = () => undefined;
 
-const show = (operation: Operation) =>
+const show = (operation: IOperation) =>
   render(
     <StatusView
       busy={false}
@@ -48,7 +48,7 @@ const show = (operation: Operation) =>
     />
   );
 
-const through = (...views: ServerView[]) => views.reduce(applyServerView, sending);
+const through = (...views: IServerView[]) => views.reduce<IOperation>(applyServerView, sending);
 
 describe('StatusView', () => {
   it('does not present the 202 answer as a report', () => {

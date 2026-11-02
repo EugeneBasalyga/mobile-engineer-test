@@ -17,7 +17,6 @@ export interface ButtonContainerExternalProps {
   loading?: boolean;
   onPress?: () => void;
   style?: StyleProp<AnimatedStyle<ViewStyle>>;
-  withHapticFeedback?: boolean;
 }
 
 export interface ButtonContainerProps extends ButtonContainerExternalProps {
@@ -45,11 +44,9 @@ const ButtonContainer = memo(
     renderContent,
     renderUnderBackground,
     style,
-    withHapticFeedback = true,
   }: ButtonContainerProps) => {
     const { handlePress, handlePressIn, handlePressOut, pressed } = usePressableHandler({
       onPress,
-      withHapticFeedback,
     });
 
     const state = useDerivedValue((): ButtonThemeState => {

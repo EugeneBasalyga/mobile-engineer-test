@@ -4,10 +4,19 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-import { createImportApi, type Uploader } from '@/packages/statementImport/api/client';
-import { ImportCoordinator, type LocalFiles, type OperationStore } from '@/packages/statementImport/core/importCoordinator';
-import type { LogEvent, LogFields } from '@/packages/statementImport/core/log';
-import type { Operation } from '@/packages/statementImport/core/operation';
+import { type AxiosResponse } from 'axios';
+
+import {
+  type IImportOperationRepository,
+  type IOperation,
+  type IStatementFileRepository,
+  type IUploadRequest,
+  type IUploadResponse,
+  type PickResult,
+} from '@/packages/statementImport/models/statementImport';
+import StatementImportRepository from '@/packages/statementImport/repositories/statementImport';
+import StatementImportService from '@/packages/statementImport/services/statementImport';
+import { type IImportLogFields, type ImportLogEvent } from '@/packages/statementImport/utils/logger';
 
 export const FIXTURES = join(__dirname, '../../../kit/fixtures');
 
@@ -47,32 +56,31 @@ export async function startMock(): Promise<Mock> {
   };
 }
 
-/** Survives "relaunch" because a new coordinator reads the same instance. Records every save. */
-export class MemoryStore implements OperationStore {
+export class MemoryStore implements IImportOperationRepository {
   value: string | null = null;
-  saves: (Operation | null)[] = [];
   failNextSave = false;
 
-  async load() {
-    return this.value ? (JSON.parse(this.value) as Operation) : null;
+  getOperation() {
+    return this.value ? (JSON.parse(this.value) as IOperation) : null;
   }
 
-  async save(operation: Operation | null) {
+  saveOperation(operation: IOperation) {
     if (this.failNextSave) {
       this.failNextSave = false;
       throw new Error('disk full');
     }
-    this.saves.push(operation);
-    this.value = operation ? JSON.stringify(operation) : null;
+    this.value = JSON.stringify(operation);
+  }
+
+  removeOperation() {
+    this.value = null;
   }
 }
 
-/** Real files in a temp folder, the same contract the native adapter fulfils. */
-export class DiskFiles implements LocalFiles {
+export class DiskFiles implements IStatementFileRepository {
   readonly directory = mkdtempSync(join(tmpdir(), 'import-test-files-'));
 
-  /** Plays the picker's role: a private copy that the coordinator then owns. */
-  pick(source: string): string {
+  copyFixture(source: string): string {
     const path = join(this.directory, `picked-${randomUUID()}`);
     copyFileSync(source, path);
     return path;
@@ -108,32 +116,56 @@ export class DiskFiles implements LocalFiles {
     return readdirSync(this.directory).map(name => join(this.directory, name));
   }
 
+  async pick(): Promise<PickResult> {
+    return { kind: 'canceled' };
+  }
+
+  upload(request: IUploadRequest) {
+    return fetchUploader(request);
+  }
+
   cleanup() {
     rmSync(this.directory, { recursive: true, force: true });
   }
 }
 
-export const fetchUploader: Uploader = async ({ url, path, headers }) => {
+export type Uploader = (request: IUploadRequest) => Promise<IUploadResponse>;
+
+export async function fetchUploader({ headers, path, url }: IUploadRequest) {
   const response = await fetch(url, { method: 'POST', headers, body: readFileSync(path) });
   return { status: response.status, body: await response.text() };
+}
+
+export type LogRecord = { event: ImportLogEvent; fields?: IImportLogFields };
+
+type ServiceOptions = {
+  uploader?: Uploader;
+  onResponse?: (response: AxiosResponse) => Promise<void>;
+  records?: LogRecord[];
 };
 
-export type LogRecord = { event: LogEvent; fields?: LogFields };
-
-export function createCoordinator(
+export function createService(
   baseUrl: string,
-  store: OperationStore,
-  files: LocalFiles,
-  options: { uploader?: Uploader; fetcher?: typeof fetch; records?: LogRecord[] } = {},
+  store: IImportOperationRepository,
+  files: IStatementFileRepository,
+  options: ServiceOptions = {},
 ) {
-  return new ImportCoordinator({
-    api: createImportApi(baseUrl, options.uploader ?? fetchUploader, options.fetcher ?? fetch),
-    store,
+  const repository = new StatementImportRepository(baseUrl, { upload: options.uploader ?? fetchUploader });
+  const { onResponse } = options;
+  if (onResponse) {
+    repository.http.addResponseInterceptor(async response => {
+      await onResponse(response);
+      return response;
+    });
+  }
+  return new StatementImportService(
+    repository,
     files,
-    log: (event, fields) => options.records?.push({ event, fields }),
-    newId: randomUUID,
-    pollIntervalMs: 50,
-  });
+    store,
+    (event, fields) => options.records?.push({ event, fields }),
+    randomUUID,
+    50,
+  );
 }
 
 export async function waitFor(condition: () => boolean, timeoutMs = 5000): Promise<void> {
