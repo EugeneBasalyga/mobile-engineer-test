@@ -1,0 +1,35 @@
+diff --git a/node_modules/react-native-blob-util/android/src/main/java/com/ReactNativeBlobUtil/ReactNativeBlobUtilReq.java b/node_modules/react-native-blob-util/android/src/main/java/com/ReactNativeBlobUtil/ReactNativeBlobUtilReq.java
+index 2799ac7..e71e50e 100644
+--- a/node_modules/react-native-blob-util/android/src/main/java/com/ReactNativeBlobUtil/ReactNativeBlobUtilReq.java
++++ b/node_modules/react-native-blob-util/android/src/main/java/com/ReactNativeBlobUtil/ReactNativeBlobUtilReq.java
+@@ -605,19 +605,20 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
+                         if (originalResponse != null) {
+                             originalResponse.close();
+                         }
++                        throw e;
+                     } catch (SocketTimeoutException e) {
+                         timeout = true;
+                         if (originalResponse != null) {
+                             originalResponse.close();
+                         }
+                         //ReactNativeBlobUtilUtils.emitWarningEvent("ReactNativeBlobUtil error when sending request : " + e.getLocalizedMessage());
++                        throw e;
+                     } catch (Exception ex) {
+                         if (originalResponse != null) {
+                             originalResponse.close();
+                         }
++                        throw ex;
+                     }
+-
+-                    return chain.proceed(chain.request());
+                 }
+             });
+ 
+@@ -639,7 +640,6 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
+             clientBuilder.retryOnConnectionFailure(false);
+             clientBuilder.followRedirects(options.followRedirect);
+             clientBuilder.followSslRedirects(options.followRedirect);
+-            clientBuilder.retryOnConnectionFailure(true);
+ 
+             OkHttpClient client = enableTls12OnPreLollipop(clientBuilder).build();
+ 
